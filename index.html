@@ -2,40 +2,54 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
+  <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+
+  <!-- MindAR -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
-  <title>Prueba MindAR</title>
+  <title>Prueba MindAR 3D</title>
 </head>
 
-<body>
+<body style="margin: 0; overflow: hidden;">
 
   <a-scene
     mindar-image="imageTargetSrc: ./targets.mind;"
     color-space="sRGB"
     renderer="colorManagement: true, physicallyCorrectLights"
     vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false">
+    device-orientation-permission-ui="enabled: false"
+  >
 
+    <!-- ARCHIVO DEL MODELO 3D -->
     <a-assets>
-      <img id="lengua" src="./LENGUA.png">
+      <a-asset-item
+        id="modelo3d"
+        src="./1777859904783.glb">
+      </a-asset-item>
     </a-assets>
 
+    <!-- CÁMARA -->
     <a-camera
       position="0 0 0"
       look-controls="enabled: false">
     </a-camera>
 
+    <!-- IMAGEN QUE MINDAR RECONOCE -->
     <a-entity mindar-image-target="targetIndex: 0">
 
-      <a-image
-        src="#lengua"
+      <!-- MODELO 3D -->
+      <a-gltf-model
+        src="#modelo3d"
         position="0 0 0"
-        width="0.65"
-        height="0.65">
-      </a-image>
+        rotation="90 0 0"
+        scale="0.5 0.5 0.5">
+      </a-gltf-model>
 
     </a-entity>
 
