@@ -234,6 +234,8 @@
 
         const touchLayer = document.querySelector("#touchLayer");
 
+        const rockText = document.querySelector("#rockText");
+
         let visible = false;
         let reacting = false;
 
@@ -259,9 +261,12 @@
             border,
             teeth,
             lips,
-            tongue
+            tongue,
+            rockText
 
           ].forEach(el => {
+
+            if (!el) return;
 
             const attrs = el.getAttributeNames();
 
@@ -333,6 +338,16 @@
             "scale",
             "1 1 1"
           );
+
+
+          if (rockText) {
+
+            rockText.setAttribute(
+              "scale",
+              "0 0 0"
+            );
+
+          }
 
           reacting = false;
           dragging = false;
@@ -472,6 +487,163 @@
               easing: "easeInOutSine"
             }
           );
+
+        };
+
+
+        /* =========================================
+           TEXTO "ROCK!" (TEXTURA GENERADA POR CANVAS)
+
+           Se dibuja una sola vez con un canvas
+           (relleno blanco, contorno negro y un halo
+           rojo por detrás) y se usa como textura de
+           un plano dentro de #entrance, en
+           z: 0.024 -> entre lips (0.017) y tongue
+           (0.032), sin tocar la posición/escala del
+           logo ni el resto de las capas.
+        ========================================= */
+
+        if (rockText) {
+
+          const rockCanvas =
+            document.createElement("canvas");
+
+          rockCanvas.width = 1024;
+          rockCanvas.height = 512;
+
+          const rockCtx =
+            rockCanvas.getContext("2d");
+
+          rockCtx.save();
+
+          rockCtx.translate(512, 256);
+          rockCtx.scale(0.8, 1);
+
+          rockCtx.textAlign = "center";
+          rockCtx.textBaseline = "middle";
+          rockCtx.lineJoin = "round";
+
+          rockCtx.font =
+            "900 300px 'Arial Black', Impact, sans-serif";
+
+
+          rockCtx.lineWidth = 34;
+          rockCtx.strokeStyle = "#e51b1b";
+          rockCtx.strokeText("ROCK!", 0, 8);
+
+
+          rockCtx.lineWidth = 18;
+          rockCtx.strokeStyle = "#000000";
+          rockCtx.strokeText("ROCK!", 0, 8);
+
+
+          rockCtx.fillStyle = "#ffffff";
+          rockCtx.fillText("ROCK!", 0, 8);
+
+          rockCtx.restore();
+
+
+          rockText.setAttribute(
+            "geometry",
+            {
+              primitive: "plane",
+              width: 0.9,
+              height: 0.45
+            }
+          );
+
+          rockText.setAttribute(
+            "material",
+            {
+              shader: "flat",
+              src: rockCanvas,
+              transparent: true,
+              alphaTest: 0.01,
+              side: "double"
+            }
+          );
+
+        }
+
+
+        /* =========================================
+           TEXTO "ROCK!" AL HACER TAP
+        ========================================= */
+
+        const playRockText = () => {
+
+          if (!rockText) return;
+
+          rockText.removeAttribute(
+            "animation__rockScaleIn"
+          );
+
+          rockText.removeAttribute(
+            "animation__rockRotIn"
+          );
+
+          rockText.removeAttribute(
+            "animation__rockScaleOut"
+          );
+
+
+          rockText.setAttribute(
+            "scale",
+            "0 0 0"
+          );
+
+          rockText.setAttribute(
+            "rotation",
+            "0 0 -14"
+          );
+
+
+          rockText.setAttribute(
+            "animation__rockScaleIn",
+            {
+              property: "scale",
+
+              from: "0 0 0",
+              to: "1 1 1",
+
+              dur: 240,
+
+              easing: "easeOutBack"
+            }
+          );
+
+          rockText.setAttribute(
+            "animation__rockRotIn",
+            {
+              property: "rotation",
+
+              from: "0 0 -14",
+              to: "0 0 -4",
+
+              dur: 240,
+
+              easing: "easeOutBack"
+            }
+          );
+
+
+          setTimeout(() => {
+
+            rockText.setAttribute(
+              "animation__rockScaleOut",
+              {
+                property: "scale",
+
+                from: "1 1 1",
+                to: "0 0 0",
+
+                dur: 320,
+
+                easing: "easeInCubic"
+              }
+            );
+
+          }, 430);
 
         };
 
@@ -754,6 +926,8 @@
           reacting = true;
 
           clearEntranceMotion();
+
+          playRockText();
 
 
           if (!hasTapped) {
@@ -1376,6 +1550,20 @@
           "
         >
         </a-image>
+
+
+        <!-- TEXTO "ROCK!" (solo aparece con TAP) -->
+
+        <a-entity
+          id="rockText"
+
+          position="0 0 0.024"
+
+          rotation="0 0 -14"
+
+          scale="0 0 0"
+        >
+        </a-entity>
 
 
         <!-- LENGUA PRINCIPAL -->
