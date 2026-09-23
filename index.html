@@ -492,58 +492,103 @@
 
 
         /* =========================================
-           TEXTO "ROCK!" (TEXTURA GENERADA POR CANVAS)
+           TEXTOS DEL CICLO (TEXTURAS POR CANVAS)
 
-           Se dibuja una sola vez con un canvas
-           (relleno blanco, contorno negro y un halo
-           rojo por detrás) y se usa como textura de
-           un plano dentro de #entrance, ubicado por
-           encima de la boca (composición tipo
-           póster: ROCK! / BOCA / LENGUA), en un Z
+           Se dibuja una textura por palabra (mismo
+           estilo: relleno blanco, contorno negro y
+           halo rojo, tipografía bold/condensada) y
+           se usan como textura de un plano dentro
+           de #entrance, ubicado por encima de la
+           boca (composición tipo póster), en un Z
            adelantado para garantizar legibilidad,
            sin tocar la posición/escala del logo ni
            el resto de las capas.
         ========================================= */
 
-        if (rockText) {
+        const createWordTexture = (word) => {
 
-          const rockCanvas =
+          const canvas =
             document.createElement("canvas");
 
-          rockCanvas.width = 1024;
-          rockCanvas.height = 512;
+          canvas.width = 1024;
+          canvas.height = 512;
 
-          const rockCtx =
-            rockCanvas.getContext("2d");
+          const ctx =
+            canvas.getContext("2d");
 
-          rockCtx.save();
+          ctx.save();
 
-          rockCtx.translate(512, 256);
-          rockCtx.scale(0.8, 1);
+          ctx.translate(512, 256);
+          ctx.scale(0.8, 1);
 
-          rockCtx.textAlign = "center";
-          rockCtx.textBaseline = "middle";
-          rockCtx.lineJoin = "round";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.lineJoin = "round";
 
-          rockCtx.font =
+          ctx.font =
             "900 300px 'Arial Black', Impact, sans-serif";
 
 
-          rockCtx.lineWidth = 34;
-          rockCtx.strokeStyle = "#e51b1b";
-          rockCtx.strokeText("ROCK!", 0, 8);
+          ctx.lineWidth = 34;
+          ctx.strokeStyle = "#e51b1b";
+          ctx.strokeText(word, 0, 8);
 
 
-          rockCtx.lineWidth = 18;
-          rockCtx.strokeStyle = "#000000";
-          rockCtx.strokeText("ROCK!", 0, 8);
+          ctx.lineWidth = 18;
+          ctx.strokeStyle = "#000000";
+          ctx.strokeText(word, 0, 8);
 
 
-          rockCtx.fillStyle = "#ffffff";
-          rockCtx.fillText("ROCK!", 0, 8);
+          ctx.fillStyle = "#ffffff";
+          ctx.fillText(word, 0, 8);
 
-          rockCtx.restore();
+          ctx.restore();
 
+          return canvas;
+
+        };
+
+
+        /*
+          Cada variante define su propia entrada
+          (lado de inclinación y tipo de overshoot)
+          para que el ciclo no se sienta repetitivo.
+        */
+
+        const rockVariants = [
+          {
+            word: "ROCK!",
+            rotFrom: "0 0 -14",
+            rotTo: "0 0 -4",
+            scaleEasing: "easeOutBack",
+            rotEasing: "easeOutBack"
+          },
+          {
+            word: "ROLL!",
+            rotFrom: "0 0 14",
+            rotTo: "0 0 4",
+            scaleEasing: "easeOutBack",
+            rotEasing: "easeOutBack"
+          },
+          {
+            word: "YEAH!",
+            rotFrom: "0 0 -10",
+            rotTo: "0 0 0",
+            scaleEasing: "easeOutElastic",
+            rotEasing: "easeOutCubic"
+          }
+        ];
+
+        let rockIndex = 0;
+
+        const rockTextures = rockText
+          ? rockVariants.map(
+              variant => createWordTexture(variant.word)
+            )
+          : [];
+
+
+        if (rockText) {
 
           rockText.setAttribute(
             "geometry",
@@ -558,7 +603,7 @@
             "material",
             {
               shader: "flat",
-              src: rockCanvas,
+              src: rockTextures[0],
               transparent: true,
               alphaTest: 0.01,
               side: "double"
@@ -569,12 +614,19 @@
 
 
         /* =========================================
-           TEXTO "ROCK!" AL HACER TAP
+           TEXTO DEL CICLO AL HACER TAP
         ========================================= */
 
         const playRockText = () => {
 
           if (!rockText) return;
+
+          const variant = rockVariants[rockIndex];
+          const texture = rockTextures[rockIndex];
+
+          rockIndex =
+            (rockIndex + 1) % rockVariants.length;
+
 
           rockText.removeAttribute(
             "animation__rockScaleIn"
@@ -590,13 +642,20 @@
 
 
           rockText.setAttribute(
+            "material",
+            {
+              src: texture
+            }
+          );
+
+          rockText.setAttribute(
             "scale",
             "0 0 0"
           );
 
           rockText.setAttribute(
             "rotation",
-            "0 0 -14"
+            variant.rotFrom
           );
 
 
@@ -608,9 +667,9 @@
               from: "0 0 0",
               to: "1 1 1",
 
-              dur: 260,
+              dur: 240,
 
-              easing: "easeOutBack"
+              easing: variant.scaleEasing
             }
           );
 
@@ -619,12 +678,12 @@
             {
               property: "rotation",
 
-              from: "0 0 -14",
-              to: "0 0 -4",
+              from: variant.rotFrom,
+              to: variant.rotTo,
 
-              dur: 260,
+              dur: 240,
 
-              easing: "easeOutBack"
+              easing: variant.rotEasing
             }
           );
 
@@ -639,13 +698,13 @@
                 from: "1 1 1",
                 to: "0 0 0",
 
-                dur: 380,
+                dur: 360,
 
                 easing: "easeInCubic"
               }
             );
 
-          }, 560);
+          }, 520);
 
         };
 
@@ -660,6 +719,7 @@
 
             visible = true;
             hasTapped = false;
+            rockIndex = 0;
 
             clearTimeout(hintTimer1);
             clearTimeout(hintTimer2);
@@ -830,10 +890,11 @@
 
 
             /*
-              Instrucción inicial: "Tocá la lengua".
-              Si el usuario ya hizo tap antes de que
-              se cumpla el timer, no se pisa el hint
-              de swipe.
+              Único mensaje de instrucción:
+              "Tocá la lengua". Si el usuario ya
+              hizo tap antes de que se cumpla el
+              timer, no se muestra (se oculta desde
+              punch()).
             */
 
             hintTimer1 = setTimeout(() => {
@@ -877,7 +938,7 @@
            componente animation apuntando a scale/
            position/rotation: las de la entrada
            inicial (ya terminadas) y las de ciclos
-           previos de TAP/SWIPE. Se eliminan todas
+           previos de TAP. Se eliminan todas
            antes de iniciar una nueva reacción para
            que no escriban simultáneamente sobre la
            misma propiedad.
@@ -895,12 +956,7 @@
             "animation__tapRot1",
             "animation__tapScale2",
             "animation__tapPos2",
-            "animation__tapRot2",
-
-            "animation__swipeRot1",
-            "animation__swipePos1",
-            "animation__swipeRot2",
-            "animation__swipePos2"
+            "animation__tapRot2"
 
           ].forEach(attr => {
 
@@ -936,7 +992,10 @@
 
             hasTapped = true;
 
-            showHint("Deslizá para moverla", 2200);
+            clearTimeout(hintTimer1);
+            clearTimeout(hintTimer2);
+
+            hint.style.opacity = "0";
 
           }
 
@@ -1088,148 +1147,6 @@
 
 
         /* =========================================
-           SWIPE HORIZONTAL DEL CONJUNTO (#entrance)
-
-           El grupo completo se inclina y se
-           desplaza levemente en la dirección del
-           gesto, y vuelve elástico al centro. La
-           lengua solo suma un parallax mínimo,
-           sin separarse del resto de las capas.
-        ========================================= */
-
-        const swipe = (direction) => {
-
-          if (!visible || reacting) return;
-
-          reacting = true;
-
-          clearEntranceMotion();
-
-
-          tongue.removeAttribute(
-            "animation__breathe"
-          );
-
-          tongue.removeAttribute(
-            "animation__float"
-          );
-
-
-          const side =
-            direction > 0 ? 1 : -1;
-
-
-          entrance.setAttribute(
-            "animation__swipeRot1",
-            {
-              property: "rotation",
-
-              from: "0 0 0",
-
-              to:
-                `0 ${side * 24} ${side * -16}`,
-
-              dur: 210,
-
-              easing: "easeOutCubic"
-            }
-          );
-
-
-          entrance.setAttribute(
-            "animation__swipePos1",
-            {
-              property: "position",
-
-              from: "-0.02 -0.03 0.105",
-
-              to:
-                `${-0.02 + side * 0.075} -0.03 0.115`,
-
-              dur: 210,
-
-              easing: "easeOutCubic"
-            }
-          );
-
-
-          tongue.setAttribute(
-            "animation__swipeTongue1",
-            {
-              property: "position",
-
-              from: "0 -0.006 0.032",
-
-              to:
-                `${side * 0.014} -0.006 0.032`,
-
-              dur: 210,
-
-              easing: "easeOutCubic"
-            }
-          );
-
-
-          setTimeout(() => {
-
-            entrance.setAttribute(
-              "animation__swipeRot2",
-              {
-                property: "rotation",
-
-                to: "0 0 0",
-
-                dur: 540,
-
-                easing: "easeOutElastic"
-              }
-            );
-
-
-            entrance.setAttribute(
-              "animation__swipePos2",
-              {
-                property: "position",
-
-                to: "-0.02 -0.03 0.105",
-
-                dur: 540,
-
-                easing: "easeOutElastic"
-              }
-            );
-
-
-            tongue.setAttribute(
-              "animation__swipeTongue2",
-              {
-                property: "position",
-
-                to: "0 -0.006 0.032",
-
-                dur: 460,
-
-                easing: "easeOutBack"
-              }
-            );
-
-          }, 220);
-
-
-          setTimeout(() => {
-
-            reacting = false;
-
-            if (visible) {
-              startIdle();
-            }
-
-          }, 780);
-
-        };
-
-
-        /* =========================================
            INTERACCIÓN MÓVIL
 
            Se usa una capa dedicada (#touchLayer)
@@ -1323,22 +1240,6 @@
 
             const dy =
               event.clientY - touchStartY;
-
-
-            /*
-              Swipe horizontal claro.
-            */
-
-            if (
-              Math.abs(dx) > 45 &&
-              Math.abs(dx) >
-              Math.abs(dy) * 1.3
-            ) {
-
-              swipe(dx);
-
-              return;
-            }
 
 
             /*
