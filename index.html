@@ -505,7 +505,7 @@
            el resto de las capas.
         ========================================= */
 
-        const createWordTexture = (word) => {
+        const createWordTexture = (word, fontSize) => {
 
           const canvas =
             document.createElement("canvas");
@@ -526,7 +526,7 @@
           ctx.lineJoin = "round";
 
           ctx.font =
-            "900 300px 'Arial Black', Impact, sans-serif";
+            `900 ${fontSize}px 'Arial Black', Impact, sans-serif`;
 
 
           ctx.lineWidth = 34;
@@ -557,21 +557,24 @@
 
         const rockVariants = [
           {
-            word: "ROCK!",
+            word: "ROCK",
+            fontSize: 300,
             rotFrom: "0 0 -14",
             rotTo: "0 0 -4",
             scaleEasing: "easeOutBack",
             rotEasing: "easeOutBack"
           },
           {
-            word: "ROLL!",
+            word: "&",
+            fontSize: 460,
             rotFrom: "0 0 14",
             rotTo: "0 0 4",
             scaleEasing: "easeOutBack",
             rotEasing: "easeOutBack"
           },
           {
-            word: "YEAH!",
+            word: "ROLL!",
+            fontSize: 300,
             rotFrom: "0 0 -10",
             rotTo: "0 0 0",
             scaleEasing: "easeOutElastic",
@@ -583,7 +586,10 @@
 
         const rockTextures = rockText
           ? rockVariants.map(
-              variant => createWordTexture(variant.word)
+              variant => createWordTexture(
+                variant.word,
+                variant.fontSize
+              )
             )
           : [];
 
