@@ -239,6 +239,8 @@
         const rockVideoEl = document.querySelector("#rockVideoSrc");
         const rockVideoEntity = document.querySelector("#rockVideoEntity");
 
+        const transitionFlash = document.querySelector("#transitionFlash");
+
         let visible = false;
         let reacting = false;
         let videoActive = false;
@@ -268,7 +270,8 @@
             lips,
             tongue,
             rockText,
-            rockVideoEntity
+            rockVideoEntity,
+            transitionFlash
 
           ].forEach(el => {
 
@@ -390,6 +393,26 @@
 
           videoActive = false;
           videoEndHandled = true;
+
+
+          if (transitionFlash) {
+
+            transitionFlash.setAttribute(
+              "visible",
+              false
+            );
+
+            transitionFlash.setAttribute(
+              "scale",
+              "0 0 0"
+            );
+
+            transitionFlash.setAttribute(
+              "material",
+              { opacity: 0 }
+            );
+
+          }
 
           reacting = false;
           dragging = false;
@@ -1225,6 +1248,200 @@
 
 
         /* =========================================
+           DESTELLO DE TRANSICIÓN (AR <-> VIDEO)
+
+           Capa independiente de #entrance y de
+           #rockVideoEntity, anclada al mismo
+           mindar-image-target (sigue el cuadro).
+           Textura generada una sola vez (gradiente
+           radial blanco -> rojo -> transparente).
+           playTransitionFlash() se reutiliza para
+           ambos sentidos, variando solo intensidad/
+           duración.
+        ========================================= */
+
+        if (transitionFlash) {
+
+          const flashCanvas =
+            document.createElement("canvas");
+
+          flashCanvas.width = 512;
+          flashCanvas.height = 512;
+
+          const flashCtx =
+            flashCanvas.getContext("2d");
+
+          const gradient =
+            flashCtx.createRadialGradient(
+              256, 256, 0,
+              256, 256, 256
+            );
+
+          gradient.addColorStop(0, "rgba(255,255,255,1)");
+          gradient.addColorStop(0.35, "rgba(255,255,255,0.95)");
+          gradient.addColorStop(0.65, "rgba(255,50,30,0.7)");
+          gradient.addColorStop(1, "rgba(255,0,0,0)");
+
+          flashCtx.fillStyle = gradient;
+          flashCtx.fillRect(0, 0, 512, 512);
+
+          transitionFlash.setAttribute(
+            "geometry",
+            {
+              primitive: "plane",
+              width: 1.4,
+              height: 1.4
+            }
+          );
+
+          transitionFlash.setAttribute(
+            "material",
+            {
+              shader: "flat",
+              src: flashCanvas,
+              transparent: true,
+              opacity: 0,
+              blending: "additive",
+              depthWrite: false,
+              side: "double"
+            }
+          );
+
+        }
+
+
+        const clearFlashMotion = () => {
+
+          if (!transitionFlash) return;
+
+          transitionFlash.removeAttribute(
+            "animation__flashScaleIn"
+          );
+
+          transitionFlash.removeAttribute(
+            "animation__flashOpacityIn"
+          );
+
+          transitionFlash.removeAttribute(
+            "animation__flashScaleOut"
+          );
+
+          transitionFlash.removeAttribute(
+            "animation__flashOpacityOut"
+          );
+
+        };
+
+
+        const playTransitionFlash = (
+          peakScale,
+          peakOpacity,
+          rampMs,
+          fadeMs
+        ) => {
+
+          if (!visible || !transitionFlash) return;
+
+          clearFlashMotion();
+
+          transitionFlash.setAttribute(
+            "visible",
+            true
+          );
+
+          transitionFlash.setAttribute(
+            "scale",
+            "0.4 0.4 0.4"
+          );
+
+          transitionFlash.setAttribute(
+            "material",
+            { opacity: 0 }
+          );
+
+
+          transitionFlash.setAttribute(
+            "animation__flashScaleIn",
+            {
+              property: "scale",
+
+              from: "0.4 0.4 0.4",
+              to: `${peakScale} ${peakScale} ${peakScale}`,
+
+              dur: rampMs,
+
+              easing: "easeOutCubic"
+            }
+          );
+
+          transitionFlash.setAttribute(
+            "animation__flashOpacityIn",
+            {
+              property: "material.opacity",
+
+              from: 0,
+              to: peakOpacity,
+
+              dur: rampMs,
+
+              easing: "easeOutCubic"
+            }
+          );
+
+
+          setTimeout(() => {
+
+            transitionFlash.setAttribute(
+              "animation__flashScaleOut",
+              {
+                property: "scale",
+
+                from: `${peakScale} ${peakScale} ${peakScale}`,
+
+                to:
+                  `${peakScale * 1.15} ${peakScale * 1.15} ${peakScale * 1.15}`,
+
+                dur: fadeMs,
+
+                easing: "easeOutCubic"
+              }
+            );
+
+            transitionFlash.setAttribute(
+              "animation__flashOpacityOut",
+              {
+                property: "material.opacity",
+
+                from: peakOpacity,
+                to: 0,
+
+                dur: fadeMs,
+
+                easing: "easeInCubic"
+              }
+            );
+
+
+            setTimeout(() => {
+
+              transitionFlash.setAttribute(
+                "visible",
+                false
+              );
+
+              transitionFlash.setAttribute(
+                "scale",
+                "0 0 0"
+              );
+
+            }, fadeMs);
+
+          }, rampMs);
+
+        };
+
+
+        /* =========================================
            VIDEO "ROCK-3D" (DESPUÉS DE ROLL!)
 
            Se activa una sola vez al completar el
@@ -1282,6 +1499,20 @@
 
 
           setTimeout(showAndPlayVideo, 220);
+
+          /*
+            Destello de entrada: arranca en +120ms y
+            tarda 100ms en llegar a su pico (rampMs),
+            así el pico cae exactamente en +220ms,
+            el mismo instante en que showAndPlayVideo()
+            ya oculta la lengua y muestra el video.
+          */
+
+          setTimeout(() => {
+
+            playTransitionFlash(1.15, 1.0, 100, 100);
+
+          }, 120);
 
         };
 
@@ -1375,6 +1606,17 @@
           if (videoEndHandled) return;
 
           videoEndHandled = true;
+
+
+          /*
+            Destello de salida, más sutil y corto:
+            arranca en el mismo instante en que el
+            video empieza a ocultarse y la lengua
+            empieza a reaparecer (ambos abajo, sin
+            delay), para disimular ese cambio.
+          */
+
+          playTransitionFlash(0.9, 0.55, 70, 70);
 
 
           if (rockVideoEl) {
@@ -1842,6 +2084,22 @@
         scale="0 0 0"
       >
       </a-video>
+
+
+      <!-- DESTELLO DE TRANSICIÓN AR <-> VIDEO -->
+
+      <a-entity
+        id="transitionFlash"
+
+        position="0 0 0.2"
+
+        rotation="0 0 0"
+
+        visible="false"
+
+        scale="0 0 0"
+      >
+      </a-entity>
 
 
     </a-entity>
