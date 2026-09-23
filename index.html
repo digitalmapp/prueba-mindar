@@ -236,8 +236,13 @@
 
         const rockText = document.querySelector("#rockText");
 
+        const rockVideoEl = document.querySelector("#rockVideoSrc");
+        const rockVideoEntity = document.querySelector("#rockVideoEntity");
+
         let visible = false;
         let reacting = false;
+        let videoActive = false;
+        let videoEndHandled = false;
 
         let hintTimer1;
         let hintTimer2;
@@ -262,7 +267,8 @@
             teeth,
             lips,
             tongue,
-            rockText
+            rockText,
+            rockVideoEntity
 
           ].forEach(el => {
 
@@ -348,6 +354,42 @@
             );
 
           }
+
+
+          /*
+            Corta el video si estaba activo (por
+            ejemplo, si se pierde el target mientras
+            reproduce): pausa, evita que el audio
+            siga sonando sin el cuadro, y deja todo
+            listo para el próximo targetFound.
+          */
+
+          if (rockVideoEl) {
+
+            try {
+
+              rockVideoEl.pause();
+
+            } catch (e) {}
+
+          }
+
+          if (rockVideoEntity) {
+
+            rockVideoEntity.setAttribute(
+              "visible",
+              false
+            );
+
+            rockVideoEntity.setAttribute(
+              "scale",
+              "0 0 0"
+            );
+
+          }
+
+          videoActive = false;
+          videoEndHandled = true;
 
           reacting = false;
           dragging = false;
@@ -625,10 +667,13 @@
 
         const playRockText = () => {
 
-          if (!rockText) return;
+          if (!rockText) return false;
 
           const variant = rockVariants[rockIndex];
           const texture = rockTextures[rockIndex];
+
+          const isFinalWord =
+            rockIndex === rockVariants.length - 1;
 
           rockIndex =
             (rockIndex + 1) % rockVariants.length;
@@ -711,6 +756,8 @@
             );
 
           }, 520);
+
+          return isFinalWord;
 
         };
 
@@ -962,7 +1009,10 @@
             "animation__tapRot1",
             "animation__tapScale2",
             "animation__tapPos2",
-            "animation__tapRot2"
+            "animation__tapRot2",
+
+            "animation__hideForVideo",
+            "animation__showAfterVideo"
 
           ].forEach(attr => {
 
@@ -985,13 +1035,13 @@
 
         const punch = () => {
 
-          if (!visible || reacting) return;
+          if (!visible || reacting || videoActive) return;
 
           reacting = true;
 
           clearEntranceMotion();
 
-          playRockText();
+          const isRollTap = playRockText();
 
 
           if (!hasTapped) {
@@ -1148,6 +1198,255 @@
             }
 
           }, 700);
+
+
+          /*
+            Tercer TAP del ciclo (ROLL!): se bloquean
+            nuevos TAP de inmediato (videoActive) y,
+            una vez que termina de jugarse la
+            animación de ROLL! (~880ms), arranca la
+            secuencia del video. No modifica en nada
+            el movimiento de #entrance/tongue de
+            arriba.
+          */
+
+          if (isRollTap) {
+
+            videoActive = true;
+
+            setTimeout(
+              startRockVideoSequence,
+              900
+            );
+
+          }
+
+        };
+
+
+        /* =========================================
+           VIDEO "ROCK-AR-SHORT" (DESPUÉS DE ROLL!)
+
+           Se activa una sola vez al completar el
+           tercer TAP del ciclo. Oculta brevemente
+           el conjunto de la lengua (una transición
+           corta, no un corte brusco), reproduce
+           rock-ar-short.mp4 anclado al mismo
+           target (hermano de #entrance, sin tocar
+           mindar-image-target/targetIndex), y al
+           terminar restaura la experiencia normal.
+           resetLayers() ya se encarga de pausar y
+           ocultar el video si se pierde el target
+           mientras reproduce.
+        ========================================= */
+
+        const startRockVideoSequence = () => {
+
+          if (!visible) return;
+
+          if (!rockVideoEl || !rockVideoEntity) {
+            videoActive = false;
+            return;
+          }
+
+
+          tongue.removeAttribute(
+            "animation__breathe"
+          );
+
+          tongue.removeAttribute(
+            "animation__float"
+          );
+
+          lips.removeAttribute(
+            "animation__lipfloat"
+          );
+
+          clearEntranceMotion();
+
+
+          entrance.setAttribute(
+            "animation__hideForVideo",
+            {
+              property: "scale",
+
+              from: "0.52 0.52 0.52",
+              to: "0 0 0",
+
+              dur: 220,
+
+              easing: "easeInBack"
+            }
+          );
+
+
+          setTimeout(showAndPlayVideo, 220);
+
+        };
+
+
+        const showAndPlayVideo = () => {
+
+          if (!visible) return;
+
+          videoEndHandled = false;
+
+          rockVideoEntity.setAttribute(
+            "visible",
+            true
+          );
+
+          rockVideoEntity.setAttribute(
+            "scale",
+            "0 0 0"
+          );
+
+          rockVideoEntity.setAttribute(
+            "animation__videoIn",
+            {
+              property: "scale",
+
+              from: "0 0 0",
+              to: "1 1 1",
+
+              dur: 240,
+
+              easing: "easeOutBack"
+            }
+          );
+
+
+          try {
+
+            rockVideoEl.currentTime = 0;
+
+          } catch (e) {}
+
+
+          const playPromise = rockVideoEl.play();
+
+          if (playPromise && playPromise.catch) {
+
+            playPromise.catch(() => {
+
+              /*
+                Si Chrome/Android bloquea el audio
+                pese a originarse en el TAP,
+                reintenta silenciado para que al
+                menos la parte visual no falle.
+              */
+
+              rockVideoEl.muted = true;
+
+              rockVideoEl.play().catch(() => {});
+
+            });
+
+          }
+
+
+          rockVideoEl.addEventListener(
+            "ended",
+            finishRockVideo,
+            { once: true }
+          );
+
+          setTimeout(finishRockVideo, 5500);
+
+        };
+
+
+        const finishRockVideo = () => {
+
+          if (videoEndHandled) return;
+
+          videoEndHandled = true;
+
+
+          if (rockVideoEl) {
+
+            try {
+
+              rockVideoEl.pause();
+
+            } catch (e) {}
+
+          }
+
+
+          if (rockVideoEntity) {
+
+            rockVideoEntity.removeAttribute(
+              "animation__videoIn"
+            );
+
+            rockVideoEntity.setAttribute(
+              "animation__videoOut",
+              {
+                property: "scale",
+
+                from: "1 1 1",
+                to: "0 0 0",
+
+                dur: 220,
+
+                easing: "easeInCubic"
+              }
+            );
+
+            setTimeout(() => {
+
+              rockVideoEntity.setAttribute(
+                "visible",
+                false
+              );
+
+            }, 220);
+
+          }
+
+
+          rockIndex = 0;
+          videoActive = false;
+
+          if (!visible) return;
+
+
+          entrance.setAttribute(
+            "position",
+            "-0.02 -0.03 0.105"
+          );
+
+          entrance.setAttribute(
+            "rotation",
+            "0 0 0"
+          );
+
+          entrance.setAttribute(
+            "scale",
+            "0 0 0"
+          );
+
+          entrance.setAttribute(
+            "animation__showAfterVideo",
+            {
+              property: "scale",
+
+              from: "0 0 0",
+              to: "0.52 0.52 0.52",
+
+              dur: 260,
+
+              easing: "easeOutBack"
+            }
+          );
+
+
+          setTimeout(() => {
+
+            if (visible) startIdle();
+
+          }, 260);
 
         };
 
@@ -1350,6 +1649,17 @@
       <img id="labios" src="./labios.png">
       <img id="lengua" src="./LENGUA.png">
 
+      <video
+        id="rockVideoSrc"
+
+        src="./rock-ar-short.mp4"
+
+        preload="auto"
+
+        playsinline
+        webkit-playsinline
+      ></video>
+
     </a-assets>
 
 
@@ -1497,6 +1807,28 @@
 
 
       </a-entity>
+
+
+      <!-- VIDEO "ROCK AND ROLL" (solo tras completar ROLL!) -->
+
+      <a-video
+        id="rockVideoEntity"
+
+        src="#rockVideoSrc"
+
+        position="0 0 0.01"
+
+        rotation="0 0 0"
+
+        width="1"
+        height="1.778"
+
+        visible="false"
+
+        scale="0 0 0"
+      >
+      </a-video>
+
 
     </a-entity>
 
