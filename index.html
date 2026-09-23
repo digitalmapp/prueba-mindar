@@ -697,6 +697,47 @@
 
 
         /* =========================================
+           LIMPIEZA DE ANIMACIONES EN CONFLICTO
+
+           #entrance acumula instancias del
+           componente animation apuntando a scale/
+           position/rotation: las de la entrada
+           inicial (ya terminadas) y las de ciclos
+           previos de TAP/SWIPE. Se eliminan todas
+           antes de iniciar una nueva reacción para
+           que no escriban simultáneamente sobre la
+           misma propiedad.
+        ========================================= */
+
+        const clearEntranceMotion = () => {
+
+          [
+            "animation__scale",
+            "animation__forward",
+            "animation__rotate",
+
+            "animation__tapScale1",
+            "animation__tapPos1",
+            "animation__tapRot1",
+            "animation__tapScale2",
+            "animation__tapPos2",
+            "animation__tapRot2",
+
+            "animation__swipeRot1",
+            "animation__swipePos1",
+            "animation__swipeRot2",
+            "animation__swipePos2"
+
+          ].forEach(attr => {
+
+            entrance.removeAttribute(attr);
+
+          });
+
+        };
+
+
+        /* =========================================
            TOQUE: IMPULSO DEL CONJUNTO (#entrance)
 
            Todo el grupo (boca, borde, dientes,
@@ -711,6 +752,8 @@
           if (!visible || reacting) return;
 
           reacting = true;
+
+          clearEntranceMotion();
 
 
           if (!hasTapped) {
@@ -883,6 +926,8 @@
           if (!visible || reacting) return;
 
           reacting = true;
+
+          clearEntranceMotion();
 
 
           tongue.removeAttribute(
