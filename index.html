@@ -497,10 +497,12 @@
            Se dibuja una sola vez con un canvas
            (relleno blanco, contorno negro y un halo
            rojo por detrás) y se usa como textura de
-           un plano dentro de #entrance, en
-           z: 0.024 -> entre lips (0.017) y tongue
-           (0.032), sin tocar la posición/escala del
-           logo ni el resto de las capas.
+           un plano dentro de #entrance, ubicado por
+           encima de la boca (composición tipo
+           póster: ROCK! / BOCA / LENGUA), en un Z
+           adelantado para garantizar legibilidad,
+           sin tocar la posición/escala del logo ni
+           el resto de las capas.
         ========================================= */
 
         if (rockText) {
@@ -547,8 +549,8 @@
             "geometry",
             {
               primitive: "plane",
-              width: 0.9,
-              height: 0.45
+              width: 1.06,
+              height: 0.53
             }
           );
 
@@ -606,7 +608,7 @@
               from: "0 0 0",
               to: "1 1 1",
 
-              dur: 240,
+              dur: 260,
 
               easing: "easeOutBack"
             }
@@ -620,7 +622,7 @@
               from: "0 0 -14",
               to: "0 0 -4",
 
-              dur: 240,
+              dur: 260,
 
               easing: "easeOutBack"
             }
@@ -637,13 +639,13 @@
                 from: "1 1 1",
                 to: "0 0 0",
 
-                dur: 320,
+                dur: 380,
 
                 easing: "easeInCubic"
               }
             );
 
-          }, 430);
+          }, 560);
 
         };
 
@@ -1557,7 +1559,7 @@
         <a-entity
           id="rockText"
 
-          position="0 0 0.024"
+          position="0 0.42 0.065"
 
           rotation="0 0 -14"
 
