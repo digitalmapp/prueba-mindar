@@ -1523,6 +1523,14 @@
 
           videoEndHandled = false;
 
+          rockVideoEntity.removeAttribute(
+            "animation__videoIn"
+          );
+
+          rockVideoEntity.removeAttribute(
+            "animation__videoOut"
+          );
+
           rockVideoEntity.setAttribute(
             "visible",
             true
@@ -1530,7 +1538,7 @@
 
           rockVideoEntity.setAttribute(
             "scale",
-            "0 0 0"
+            "0.9 0.9 0.9"
           );
 
           rockVideoEntity.setAttribute(
@@ -1538,12 +1546,12 @@
             {
               property: "scale",
 
-              from: "0 0 0",
+              from: "0.9 0.9 0.9",
               to: "1 1 1",
 
-              dur: 240,
+              dur: 350,
 
-              easing: "easeOutBack"
+              easing: "easeOutCubic"
             }
           );
 
