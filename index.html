@@ -1225,13 +1225,14 @@
 
 
         /* =========================================
-           VIDEO "ROCK-AR-SHORT" (DESPUÉS DE ROLL!)
+           VIDEO "ROCK-3D" (DESPUÉS DE ROLL!)
 
            Se activa una sola vez al completar el
            tercer TAP del ciclo. Oculta brevemente
            el conjunto de la lengua (una transición
            corta, no un corte brusco), reproduce
-           rock-ar-short.mp4 anclado al mismo
+           rock-3d.mp4 completo (duración real,
+           sin timeout fijo) anclado al mismo
            target (hermano de #entrance, sin tocar
            mindar-image-target/targetIndex), y al
            terminar restaura la experiencia normal.
@@ -1351,7 +1352,20 @@
             { once: true }
           );
 
-          setTimeout(finishRockVideo, 5500);
+          /*
+            Sin timeout fijo: el regreso a la lengua
+            se dispara con el evento "ended" real del
+            video (dura lo que dure). "error" queda
+            como único respaldo, solo para no dejar
+            la experiencia trabada si la reproducción
+            falla por completo.
+          */
+
+          rockVideoEl.addEventListener(
+            "error",
+            finishRockVideo,
+            { once: true }
+          );
 
         };
 
@@ -1652,7 +1666,7 @@
       <video
         id="rockVideoSrc"
 
-        src="./rock-ar-short.mp4"
+        src="./rock-3d.mp4"
 
         preload="auto"
 
@@ -1821,7 +1835,7 @@
         rotation="0 0 0"
 
         width="1"
-        height="1.778"
+        height="0.5625"
 
         visible="false"
 
