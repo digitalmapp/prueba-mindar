@@ -1,60 +1,275 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
   <meta charset="UTF-8">
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
   >
 
   <title>Prueba MindAR 2.5D</title>
 
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
+    * {
+      box-sizing: border-box !important;
+    }
+
     html,
     body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
+      margin: 0 !important;
+      padding: 0 !important;
+
+      width: 100% !important;
+      height: 100% !important;
+
+      overflow: hidden !important;
+
+      background: #000 !important;
     }
 
     body {
-      position: fixed;
-      inset: 0;
-    }
-
-    a-scene {
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
+      right: 0 !important;
+      bottom: 0 !important;
+
+      width: 100dvw !important;
+      height: 100dvh !important;
+
+      max-width: none !important;
+      max-height: none !important;
     }
 
-    .a-canvas {
-      width: 100vw !important;
-      height: 100vh !important;
+    /* ESCENA A-FRAME */
+
+    a-scene,
+    .a-scene {
+      position: fixed !important;
+
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+
+      width: 100dvw !important;
+      height: 100dvh !important;
+
+      max-width: none !important;
+      max-height: none !important;
+
+      margin: 0 !important;
+      padding: 0 !important;
+
+      overflow: hidden !important;
     }
+
+    /* CANVAS DE A-FRAME */
+
+    canvas,
+    .a-canvas {
+      position: fixed !important;
+
+      top: 0 !important;
+      left: 0 !important;
+
+      width: 100dvw !important;
+      height: 100dvh !important;
+
+      max-width: none !important;
+      max-height: none !important;
+
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    /* VIDEO DE LA CÁMARA */
 
     video {
-      width: 100vw !important;
-      height: 100vh !important;
+      position: fixed !important;
+
+      top: 0 !important;
+      left: 0 !important;
+
+      width: 100dvw !important;
+      height: 100dvh !important;
+
+      min-width: 100dvw !important;
+      min-height: 100dvh !important;
+
+      max-width: none !important;
+      max-height: none !important;
+
       object-fit: cover !important;
+      object-position: center center !important;
+
+      margin: 0 !important;
+      padding: 0 !important;
+
+      transform: none !important;
+    }
+
+    /* BOTÓN MÚSICA */
+
+    #musicButton {
+      position: fixed;
+
+      left: 50%;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+
+      transform: translateX(-50%);
+
+      z-index: 999999;
+
+      border: 1px solid rgba(255,255,255,0.45);
+      border-radius: 999px;
+
+      padding: 12px 20px;
+
+      background: rgba(0,0,0,0.76);
+
+      color: white;
+
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+
+      letter-spacing: 0.7px;
+
+      text-decoration: none;
+
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+
+      box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+
+      display: none;
+    }
+
+    #musicButton:active {
+      transform: translateX(-50%) scale(0.96);
     }
   </style>
+
+
+  <script>
+    AFRAME.registerComponent("rolling-animation", {
+
+      init: function () {
+
+        const target = this.el;
+
+        const logo = document.querySelector("#rollingLogo");
+        const tongue = document.querySelector("#tongueLayer");
+        const musicButton = document.querySelector("#musicButton");
+
+        target.addEventListener("targetFound", () => {
+
+          musicButton.style.display = "block";
+
+          /*
+             APARICIÓN DEL LOGO
+          */
+
+          logo.setAttribute(
+            "animation__scale",
+            {
+              property: "scale",
+              from: "0.35 0.35 0.35",
+              to: "0.62 0.62 0.62",
+              dur: 650,
+              easing: "easeOutBack"
+            }
+          );
+
+
+          /*
+             LA LENGUA SALE HACIA LA CÁMARA
+          */
+
+          tongue.setAttribute(
+            "animation__tongue",
+            {
+              property: "position",
+              from: "0 0 0.02",
+              to: "0 0 0.11",
+              dur: 900,
+              delay: 300,
+              easing: "easeOutBack"
+            }
+          );
+
+
+          /*
+             PEQUEÑO REBOTE
+          */
+
+          tongue.setAttribute(
+            "animation__tonguescale",
+            {
+              property: "scale",
+              from: "0.92 0.92 0.92",
+              to: "1 1 1",
+              dur: 850,
+              delay: 300,
+              easing: "easeOutElastic"
+            }
+          );
+
+        });
+
+
+        target.addEventListener("targetLost", () => {
+
+          musicButton.style.display = "none";
+
+          /*
+             RESTABLECEMOS PARA QUE LA ANIMACIÓN
+             PUEDA REPETIRSE AL VOLVER A ENFOCAR
+          */
+
+          logo.setAttribute("scale", "0.35 0.35 0.35");
+
+          tongue.setAttribute(
+            "position",
+            "0 0 0.02"
+          );
+
+          tongue.setAttribute(
+            "scale",
+            "0.92 0.92 0.92"
+          );
+
+        });
+
+      }
+
+    });
+  </script>
+
 </head>
+
 
 <body>
 
+
+  <a
+    id="musicButton"
+    href="https://www.youtube.com/results?search_query=The+Rolling+Stones+Satisfaction+official"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    ♫ PLAY SATISFACTION
+  </a>
+
+
+
   <a-scene
+
     mindar-image="
       imageTargetSrc: ./targets.mind;
       autoStart: true;
@@ -62,30 +277,53 @@
       uiLoading: yes;
       uiError: yes;
     "
+
     color-space="sRGB"
+
     renderer="
       colorManagement: true;
       physicallyCorrectLights: true;
       alpha: true;
+      antialias: true;
     "
+
     vr-mode-ui="enabled: false"
+
     device-orientation-permission-ui="enabled: false"
+
     embedded
   >
 
+
     <a-assets>
 
-      <img id="boca" src="./boca.png" crossorigin="anonymous">
+      <img
+        id="boca"
+        src="./boca.png"
+      >
 
-      <img id="borde" src="./borde.png" crossorigin="anonymous">
+      <img
+        id="borde"
+        src="./borde.png"
+      >
 
-      <img id="dientes" src="./dientes.png" crossorigin="anonymous">
+      <img
+        id="dientes"
+        src="./dientes.png"
+      >
 
-      <img id="labios" src="./labios.png" crossorigin="anonymous">
+      <img
+        id="labios"
+        src="./labios.png"
+      >
 
-      <img id="lengua" src="./LENGUA.png" crossorigin="anonymous">
+      <img
+        id="lengua"
+        src="./LENGUA.png"
+      >
 
     </a-assets>
+
 
 
     <a-camera
@@ -95,30 +333,40 @@
     </a-camera>
 
 
-    <a-entity mindar-image-target="targetIndex: 0">
+
+    <a-entity
+      mindar-image-target="targetIndex: 0"
+      rolling-animation
+    >
+
 
       <!--
-        CONTENEDOR GENERAL
+        CONTENEDOR PRINCIPAL
 
-        x = izquierda/derecha
-        y = arriba/abajo
-
-        Bajamos y centramos ligeramente todo el conjunto.
+        Mantengo la posición que ya habíamos
+        conseguido para el logo.
       -->
 
       <a-entity
+        id="rollingLogo"
+
         position="-0.20 0.10 0"
-        scale="0.62 0.62 0.62"
+
+        scale="0.35 0.35 0.35"
       >
 
 
-        <!-- FONDO DE LA BOCA -->
+
+        <!-- BOCA / BASE -->
 
         <a-image
           src="#boca"
-          position="0 0 0.001"
+
+          position="0 0 0.005"
+
           width="1"
           height="1"
+
           material="
             transparent: true;
             alphaTest: 0.01;
@@ -126,15 +374,19 @@
           "
         >
         </a-image>
+
 
 
         <!-- BORDE -->
 
         <a-image
           src="#borde"
-          position="0 0 0.004"
+
+          position="0 0 0.025"
+
           width="1"
           height="1"
+
           material="
             transparent: true;
             alphaTest: 0.01;
@@ -142,15 +394,19 @@
           "
         >
         </a-image>
+
 
 
         <!-- DIENTES -->
 
         <a-image
           src="#dientes"
-          position="0 0 0.007"
+
+          position="0 0 0.045"
+
           width="1"
           height="1"
+
           material="
             transparent: true;
             alphaTest: 0.01;
@@ -158,15 +414,19 @@
           "
         >
         </a-image>
+
 
 
         <!-- LABIOS -->
 
         <a-image
           src="#labios"
-          position="0 0 0.011"
+
+          position="0 0 0.070"
+
           width="1"
           height="1"
+
           material="
             transparent: true;
             alphaTest: 0.01;
@@ -176,13 +436,21 @@
         </a-image>
 
 
+
         <!-- LENGUA -->
 
         <a-image
+          id="tongueLayer"
+
           src="#lengua"
-          position="0 0 0.020"
+
+          position="0 0 0.02"
+
+          scale="0.92 0.92 0.92"
+
           width="1"
           height="1"
+
           material="
             transparent: true;
             alphaTest: 0.01;
@@ -194,10 +462,12 @@
 
       </a-entity>
 
+
     </a-entity>
+
 
   </a-scene>
 
-</body>
 
+</body>
 </html>
