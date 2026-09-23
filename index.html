@@ -244,6 +244,7 @@
         let touchStartY = 0;
         let dragging = false;
         let activePointerId = null;
+        let hasTapped = false;
 
 
         /* =========================================
@@ -336,6 +337,26 @@
           reacting = false;
           dragging = false;
           activePointerId = null;
+
+        };
+
+
+        /* =========================================
+           GUÍA DE USUARIO (HINT EN DOS ETAPAS)
+        ========================================= */
+
+        const showHint = (text, holdMs) => {
+
+          clearTimeout(hintTimer2);
+
+          hint.textContent = text;
+          hint.style.opacity = "1";
+
+          hintTimer2 = setTimeout(() => {
+
+            hint.style.opacity = "0";
+
+          }, holdMs);
 
         };
 
@@ -464,6 +485,7 @@
           () => {
 
             visible = true;
+            hasTapped = false;
 
             clearTimeout(hintTimer1);
             clearTimeout(hintTimer2);
@@ -634,23 +656,19 @@
 
 
             /*
-              Instrucción breve.
+              Instrucción inicial: "Tocá la lengua".
+              Si el usuario ya hizo tap antes de que
+              se cumpla el timer, no se pisa el hint
+              de swipe.
             */
 
             hintTimer1 = setTimeout(() => {
 
-              if (visible) {
-                hint.style.opacity = "1";
+              if (visible && !hasTapped) {
+                showHint("Tocá la lengua", 2600);
               }
 
             }, 1250);
-
-
-            hintTimer2 = setTimeout(() => {
-
-              hint.style.opacity = "0";
-
-            }, 3500);
 
           }
         );
@@ -665,6 +683,7 @@
           () => {
 
             visible = false;
+            hasTapped = false;
 
             clearTimeout(hintTimer1);
             clearTimeout(hintTimer2);
@@ -694,6 +713,15 @@
           reacting = true;
 
 
+          if (!hasTapped) {
+
+            hasTapped = true;
+
+            showHint("Deslizá para moverla", 2200);
+
+          }
+
+
           tongue.removeAttribute(
             "animation__breathe"
           );
@@ -709,9 +737,9 @@
               property: "scale",
 
               from: "0.52 0.52 0.52",
-              to: "0.58 0.58 0.58",
+              to: "0.66 0.66 0.66",
 
-              dur: 170,
+              dur: 200,
 
               easing: "easeOutCubic"
             }
@@ -724,9 +752,9 @@
               property: "position",
 
               from: "-0.02 -0.03 0.105",
-              to: "-0.02 -0.02 0.125",
+              to: "-0.02 -0.015 0.17",
 
-              dur: 170,
+              dur: 200,
 
               easing: "easeOutCubic"
             }
@@ -739,9 +767,9 @@
               property: "rotation",
 
               from: "0 0 0",
-              to: "3 3 -3",
+              to: "6 6 -6",
 
-              dur: 170,
+              dur: 200,
 
               easing: "easeOutCubic"
             }
@@ -754,9 +782,9 @@
               property: "scale",
 
               from: "1 1 1",
-              to: "1.05 1.05 1.05",
+              to: "1.08 1.08 1.08",
 
-              dur: 170,
+              dur: 200,
 
               easing: "easeOutCubic"
             }
@@ -770,10 +798,10 @@
               {
                 property: "scale",
 
-                from: "0.58 0.58 0.58",
+                from: "0.66 0.66 0.66",
                 to: "0.52 0.52 0.52",
 
-                dur: 420,
+                dur: 480,
 
                 easing: "easeOutBack"
               }
@@ -785,10 +813,10 @@
               {
                 property: "position",
 
-                from: "-0.02 -0.02 0.125",
+                from: "-0.02 -0.015 0.17",
                 to: "-0.02 -0.03 0.105",
 
-                dur: 420,
+                dur: 480,
 
                 easing: "easeOutBack"
               }
@@ -800,10 +828,10 @@
               {
                 property: "rotation",
 
-                from: "3 3 -3",
+                from: "6 6 -6",
                 to: "0 0 0",
 
-                dur: 420,
+                dur: 480,
 
                 easing: "easeOutBack"
               }
@@ -815,16 +843,16 @@
               {
                 property: "scale",
 
-                from: "1.05 1.05 1.05",
+                from: "1.08 1.08 1.08",
                 to: "1 1 1",
 
-                dur: 420,
+                dur: 480,
 
                 easing: "easeOutBack"
               }
             );
 
-          }, 180);
+          }, 200);
 
 
           setTimeout(() => {
@@ -835,7 +863,7 @@
               startIdle();
             }
 
-          }, 620);
+          }, 700);
 
         };
 
@@ -878,9 +906,9 @@
               from: "0 0 0",
 
               to:
-                `0 ${side * 10} ${side * -6}`,
+                `0 ${side * 24} ${side * -16}`,
 
-              dur: 190,
+              dur: 210,
 
               easing: "easeOutCubic"
             }
@@ -895,9 +923,9 @@
               from: "-0.02 -0.03 0.105",
 
               to:
-                `${-0.02 + side * 0.035} -0.03 0.105`,
+                `${-0.02 + side * 0.075} -0.03 0.115`,
 
-              dur: 190,
+              dur: 210,
 
               easing: "easeOutCubic"
             }
@@ -912,9 +940,9 @@
               from: "0 -0.006 0.032",
 
               to:
-                `${side * 0.006} -0.006 0.032`,
+                `${side * 0.014} -0.006 0.032`,
 
-              dur: 190,
+              dur: 210,
 
               easing: "easeOutCubic"
             }
@@ -930,7 +958,7 @@
 
                 to: "0 0 0",
 
-                dur: 460,
+                dur: 540,
 
                 easing: "easeOutElastic"
               }
@@ -944,7 +972,7 @@
 
                 to: "-0.02 -0.03 0.105",
 
-                dur: 460,
+                dur: 540,
 
                 easing: "easeOutElastic"
               }
@@ -958,13 +986,13 @@
 
                 to: "0 -0.006 0.032",
 
-                dur: 400,
+                dur: 460,
 
                 easing: "easeOutBack"
               }
             );
 
-          }, 200);
+          }, 220);
 
 
           setTimeout(() => {
@@ -975,7 +1003,7 @@
               startIdle();
             }
 
-          }, 700);
+          }, 780);
 
         };
 
@@ -1151,7 +1179,7 @@
 
 
   <div id="hint">
-    Interactuá
+    Tocá la lengua
   </div>
 
 
