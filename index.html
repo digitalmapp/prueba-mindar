@@ -141,6 +141,21 @@
       }
     }
 
+    /* CAPA DE INTERACCIÓN TÁCTIL */
+
+    #touchLayer {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+
+      background: transparent;
+
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
     /* PARTÍCULAS */
 
     #particles {
@@ -217,7 +232,7 @@
         const burst = document.querySelector("#burst");
         const particles = document.querySelectorAll(".particle");
 
-        const scene = document.querySelector("a-scene");
+        const touchLayer = document.querySelector("#touchLayer");
 
         let visible = false;
         let reacting = false;
@@ -228,6 +243,7 @@
         let touchStartX = 0;
         let touchStartY = 0;
         let dragging = false;
+        let activePointerId = null;
 
 
         /* =========================================
@@ -319,6 +335,7 @@
 
           reacting = false;
           dragging = false;
+          activePointerId = null;
 
         };
 
@@ -892,136 +909,147 @@
 
         /* =========================================
            INTERACCIÓN MÓVIL
+
+           Se usa una capa dedicada (#touchLayer)
+           con Pointer Events en lugar de depender
+           del canvas de MindAR/A-Frame o de click,
+           porque en Android/Chrome el video y los
+           overlays de UI de MindAR pueden quedar
+           por encima del canvas y absorber el toque
+           antes de que llegue a un listener puesto
+           directamente sobre él.
         ========================================= */
 
-        scene.addEventListener(
-          "loaded",
-          () => {
+        if (touchLayer) {
 
-            const canvas = scene.canvas;
+          touchLayer.addEventListener(
+            "pointerdown",
+            event => {
 
-            if (!canvas) return;
+              if (!visible) return;
 
+              if (activePointerId !== null) return;
 
-            canvas.addEventListener(
-              "touchstart",
-              event => {
+              activePointerId = event.pointerId;
 
-                if (!visible) return;
+              touchStartX = event.clientX;
+              touchStartY = event.clientY;
 
-                const touch =
-                  event.touches[0];
-
-                if (!touch) return;
+              dragging = false;
 
 
-                touchStartX =
-                  touch.clientX;
+              if (touchLayer.setPointerCapture) {
 
-                touchStartY =
-                  touch.clientY;
+                try {
 
-                dragging = false;
+                  touchLayer.setPointerCapture(
+                    event.pointerId
+                  );
 
-              },
+                } catch (e) {}
 
-              { passive: true }
-            );
+              }
 
+            },
 
-            canvas.addEventListener(
-              "touchmove",
-              event => {
-
-                if (!visible) return;
-
-                const touch =
-                  event.touches[0];
-
-                if (!touch) return;
+            { passive: true }
+          );
 
 
-                const dx =
-                  touch.clientX - touchStartX;
+          touchLayer.addEventListener(
+            "pointermove",
+            event => {
 
-                const dy =
-                  touch.clientY - touchStartY;
+              if (!visible) return;
 
-
-                if (
-                  Math.abs(dx) > 12 ||
-                  Math.abs(dy) > 12
-                ) {
-
-                  dragging = true;
-
-                }
-
-              },
-
-              { passive: true }
-            );
+              if (event.pointerId !== activePointerId) return;
 
 
-            canvas.addEventListener(
-              "touchend",
-              event => {
+              const dx =
+                event.clientX - touchStartX;
 
-                if (!visible) return;
-
-                event.preventDefault();
+              const dy =
+                event.clientY - touchStartY;
 
 
-                const touch =
-                  event.changedTouches[0];
+              if (
+                Math.abs(dx) > 12 ||
+                Math.abs(dy) > 12
+              ) {
 
-                if (!touch) return;
+                dragging = true;
 
+              }
 
-                const dx =
-                  touch.clientX - touchStartX;
+            },
 
-                const dy =
-                  touch.clientY - touchStartY;
-
-
-                /*
-                  Swipe horizontal claro.
-                */
-
-                if (
-                  Math.abs(dx) > 45 &&
-                  Math.abs(dx) >
-                  Math.abs(dy) * 1.3
-                ) {
-
-                  swipe(dx);
-
-                  return;
-                }
+            { passive: true }
+          );
 
 
-                /*
-                  Si prácticamente no se movió,
-                  lo consideramos toque.
-                */
+          const endGesture = event => {
 
-                if (
-                  Math.abs(dx) < 18 &&
-                  Math.abs(dy) < 18
-                ) {
+            if (event.pointerId !== activePointerId) return;
 
-                  punch();
+            activePointerId = null;
 
-                }
+            if (!visible) return;
 
-              },
 
-              { passive: false }
-            );
+            const dx =
+              event.clientX - touchStartX;
 
-          }
-        );
+            const dy =
+              event.clientY - touchStartY;
+
+
+            /*
+              Swipe horizontal claro.
+            */
+
+            if (
+              Math.abs(dx) > 45 &&
+              Math.abs(dx) >
+              Math.abs(dy) * 1.3
+            ) {
+
+              swipe(dx);
+
+              return;
+            }
+
+
+            /*
+              Si prácticamente no se movió,
+              lo consideramos toque.
+            */
+
+            if (
+              Math.abs(dx) < 18 &&
+              Math.abs(dy) < 18
+            ) {
+
+              punch();
+
+            }
+
+          };
+
+
+          touchLayer.addEventListener(
+            "pointerup",
+            endGesture,
+            { passive: true }
+          );
+
+
+          touchLayer.addEventListener(
+            "pointercancel",
+            endGesture,
+            { passive: true }
+          );
+
+        }
 
       }
 
@@ -1052,6 +1080,9 @@
   <div id="hint">
     Tocá o deslizá
   </div>
+
+
+  <div id="touchLayer"></div>
 
 
   <a-scene
